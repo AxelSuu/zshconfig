@@ -1,10 +1,23 @@
+lt() {
+  echo "  fun"
+  echo "  väder            → Linköping forecast"
+  echo "  stock <ticker>   → market data"
+  echo "  rate <coin>      → crypto/currency rates"
+  echo "  tmap             → ASCII world map"
+  echo ""
+  echo "  tools"
+  echo "  yeet [msg]       → git add·commit·push"
+  echo "  up <n>           → go up N dirs"
+  echo "  ff <name>        → fuzzy find files"
+  echo "  qr <url>         → QR code in terminal"
+}
+
+lt
+
+
 # ─── PERFORMANCE ────────────────────────────────────────────────────────────
 autoload -Uz compinit
-if [ "$(date +'%j')" != "$(stat -c '%Y' ~/.zcompdump 2>/dev/null | xargs -I{} date -d @{} +'%j' 2>/dev/null)" ]; then
-  compinit
-else
-  compinit -C
-fi
+if [[ -n ~/.zcompdump(#qN.mh+24) ]]; then compinit; else compinit -C; fi
 
 # ─── HISTORY ────────────────────────────────────────────────────────────────
 HISTFILE=~/.zsh_history
@@ -13,14 +26,13 @@ SAVEHIST=100000
 setopt HIST_IGNORE_ALL_DUPS   # Remove older duplicates
 setopt HIST_IGNORE_SPACE      # Commands starting with space aren't saved
 setopt HIST_REDUCE_BLANKS     # Remove superfluous blanks
-setopt INC_APPEND_HISTORY     # Write immediately, not on shell exit
-setopt SHARE_HISTORY          # Share history across terminals
+setopt SHARE_HISTORY          # Share history across terminals (implies INC_APPEND_HISTORY)
 setopt HIST_VERIFY            # Show command before running it from history
 
 # ─── COMPLETION ─────────────────────────────────────────────────────────────
 zstyle ':completion:*' menu select
 zstyle ':completion::complete:*' use-cache yes
-zstyle ':completion:*' matcher-list 'm:{a-z}={A-Z}'
+zstyle ':completion:*' matcher-list 'm:{a-zA-Z}={a-zA-Z}'
 
 # ─── OPTIONS ────────────────────────────────────────────────────────────────
 setopt AUTO_CD
@@ -65,7 +77,7 @@ elif command -v bat &>/dev/null; then
   alias cat='bat --paging=never'
 fi
 
-command -v rg &>/dev/null && alias grep='rg' || alias grep='grep --color=auto'
+alias grep='grep --color=auto'
 
 # Navigation
 alias ..='cd ..'
@@ -84,60 +96,6 @@ alias gd='git diff'
 # Config
 alias zrc='code ~/.zshrc'
 alias src='source ~/.zshrc'
-
-
-# ── tmux ──────────────────────────────────────────────────────────────────────
-
-# Smart attach: attach if session exists, create if not
-# Usage: t          → attaches to/creates "main"
-#        t robot    → attaches to/creates "robot"
-function t() {
-  local name=${1:-main}
-  tmux attach -t "$name" 2>/dev/null || tmux new-session -s "$name"
-}
-
-# Kill a session
-function tk() {
-  local name=${1:-main}
-  tmux kill-session -t "$name" && echo "killed: $name"
-}
-
-# Fuzzy-pick a session with fzf (falls back to list if no fzf)
-function ts() {
-  if command -v fzf &>/dev/null; then
-    local session
-    session=$(tmux ls 2>/dev/null | fzf --height=10 --reverse | cut -d: -f1)
-    [[ -n "$session" ]] && tmux attach -t "$session"
-  else
-    tmux ls 2>/dev/null || echo "no sessions running"
-  fi
-}
-
-# Quick project launchers — edit these to match your actual paths
-function tdev() {
-  local name="fintech"
-  tmux has-session -t "$name" 2>/dev/null && tmux attach -t "$name" && return
-
-  tmux new-session  -d -s "$name" -n "backend"  -c ~/projects/fintech
-  tmux new-window       -t "$name"  -n "frontend" -c ~/projects/fintech
-  tmux new-window       -t "$name"  -n "db"       -c ~/projects/fintech
-  tmux send-keys    -t "$name:db" "psql" Enter
-  tmux select-window    -t "$name:backend"
-  tmux attach       -t "$name"
-}
-
-function trobot() {
-  local name="robot"
-  tmux has-session -t "$name" 2>/dev/null && tmux attach -t "$name" && return
-
-  tmux new-session  -d -s "$name" -n "code"   -c ~/projects/robot
-  tmux new-window       -t "$name"  -n "pi"     -c ~/projects/robot
-  tmux new-window       -t "$name"  -n "serial" -c ~/projects/robot
-  # auto-ssh into pi on that window (adjust hostname)
-  tmux send-keys    -t "$name:pi" "ssh pi@raspberrypi.local" Enter
-  tmux select-window    -t "$name:code"
-  tmux attach       -t "$name"
-}
 
 # Aliases
 alias tl='tmux ls 2>/dev/null || echo "no sessions"'
@@ -173,7 +131,8 @@ timer() {
     sleep 1
     ((secs--))
   done
-  printf "\r00:00\n" && notify-send "Timer done" 2>/dev/null || echo "\a"
+  printf "\r00:00\n"
+  notify-send "Timer done" 2>/dev/null || echo "\a"
 }
 
 take() {
@@ -205,16 +164,15 @@ alias tmap='telnet mapscii.me'
 
 alias co='git checkout'
 
+# Note Claude runs on dangerous mode!
+alias claude='claude --dangerously-skip-permissions'
+
+alias vim='nvim'
+
 news() { curl "getnews.tech/${1:-world}" }
 
 stock() {
   tickrs -s $1
-}
-
-start() {
-  cd kandidat/code
-  code .
-  
 }
 
 # Upload a file directly from the terminal and get a shareable URL back.
@@ -245,25 +203,6 @@ ff() { find . -iname "*$1*" 2>/dev/null }
 # Find and open in $EDITOR
 fe() { local f=$(fzf --preview 'bat --color=always {}' 2>/dev/null) && [[ -n "$f" ]] && ${EDITOR:-vim} "$f" }
 
-
-lt() {
-  echo "  fun stuff: "
-  echo "  stock <ticker> — Graphs and market data for stocks"
-  echo "  claude         — claude code"
-  echo "  väder          — forecast for Linköping"
-  echo "  tmap           — ASCII world map (telnet)"
-  echo "  rate <coin>    — currency/crypto rates"
-  echo "  "
-  echo "  productivity stuff: "
-  echo "  qr <url>       — generate QR code in terminal"
-  echo "  lazygit        — git TUI"
-  echo "  glow <file>    — render markdown in terminal"
-  echo "  yeet [msg]     — git add+commit+push"
-  echo "  up <n>         — go up N directories"
-  echo "  ff <name>      — fuzzy find files"
-  
-}
-
 # ─── DIRECTORY BOOKMARKS ────────────────────────────────────────────────────
 # Customize these to your paths
 hash -d code=~/code 2>/dev/null
@@ -273,16 +212,25 @@ hash -d dl=~/Downloads 2>/dev/null
 # ─── ENVIRONMENT ────────────────────────────────────────────────────────────
 export EDITOR='nvim'  # Change to your preference
 export GPG_TTY=$(tty)
-export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.local/bin:$HOME/.npm-global/bin:$PATH"
 
-# NVM (lazy-load)
+# NVM (truly lazy — loads only when node/npm/nvm is first called)
 export NVM_DIR="$HOME/.nvm"
-[ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh" --no-use
+_load_nvm() {
+  unset -f nvm node npm npx
+  [ -s "$NVM_DIR/nvm.sh" ] && . "$NVM_DIR/nvm.sh"
+}
+nvm()  { _load_nvm; nvm  "$@" }
+node() { _load_nvm; node "$@" }
+npm()  { _load_nvm; npm  "$@" }
+npx()  { _load_nvm; npx  "$@" }
 
-# SSH agent
-if [ -z "$SSH_AUTH_SOCK" ]; then
-  eval "$(ssh-agent -s)" > /dev/null 2>&1
+# SSH agent — one persistent agent per user, not one per terminal
+_ssh_env="$HOME/.ssh/agent.env"
+[[ -f "$_ssh_env" ]] && source "$_ssh_env" > /dev/null
+if ! ssh-add -l &>/dev/null; then
+  ssh-agent -s > "$_ssh_env"
+  source "$_ssh_env" > /dev/null
+  chmod 600 "$_ssh_env"
 fi
-export PATH="/home/axel/.npm-global/bin:$PATH"
-
-lt
+unset _ssh_env
