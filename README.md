@@ -1,23 +1,16 @@
 ## My .zshrc config
 
-### Example functions
+fun stuff:
+- stock <ticker>  - Graphs and market data for stocks
+- claude          - claude code
+-  väder          - forecast for Linköping
+-  tmap           - ASCII world map (telnet)
+-  rate <coin>    - currency/crypto rates
 
-väder() {
-  curl wttr.in/Linköping
-}
-
-stock() {
-  tickrs -s $1
-}
-
-qr() { curl "qrenco.de/$1" }
-
-yeet() {
-  git add -A
-  git commit -m "${1:-quick save}"
-  git push
-}
-
-ff() { find . -iname "*$1*" 2>/dev/null }
-
-up() { local d=""; for ((i=0; i<${1:-1}; i++)); do d="../$d"; done; cd "$d" || return; }
+productivity stuff:
+-  qr <url>       - generate QR code in terminal
+-  lazygit        - git TUI
+-  glow <file>    - render markdown in terminal
+-  yeet [msg]     - git add+commit+push
+-  up <n>         - go up N directories
+-  ff <name>      - fuzzy find files
